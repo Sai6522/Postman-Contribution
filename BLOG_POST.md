@@ -191,7 +191,7 @@ In this tutorial you:
 - [Postbot Documentation](https://learning.postman.com/docs/getting-started/basics/about-postbot/)
 - [Public API Network](https://www.postman.com/explore)
 - [JSONPlaceholder API](https://jsonplaceholder.typicode.com)
-- [Interactive Demo Page](https://your-demo-url.com) ← replace with your hosted URL
+- [Interactive Demo Page](https://sai6522.github.io/Postman-Contribution/)
 - [Public Workspace](https://www.postman.com/supply-geoscientist-53692381/workspace/user-posts-pipeline)
 
 ---
