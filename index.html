@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>API Automation with Postman Flows + Postbot</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- HERO -->
+  <header class="hero">
+    <div class="hero-inner">
+      <span class="badge">Postman Community Contribution</span>
+      <h1>Build a No-Code API Automation Pipeline<br>with <span class="accent">Postman Flows</span> + <span class="accent">Postbot</span></h1>
+      <p class="hero-sub">Chain multiple API calls visually, auto-generate tests with AI, and share your work — all inside Postman.</p>
+      <div class="hero-cta">
+        <a href="#tutorial" class="btn btn-primary">Start Tutorial</a>
+        <a href="#workspace" class="btn btn-outline">View Workspace</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- WHAT YOU'LL BUILD -->
+  <section class="section" id="overview">
+    <div class="container">
+      <h2 class="section-title">What You'll Build</h2>
+      <div class="cards">
+        <div class="card">
+          <div class="card-icon">🔗</div>
+          <h3>API Chain</h3>
+          <p>Fetch a user → get their posts → filter by keyword — all without writing a single line of code.</p>
+        </div>
+        <div class="card">
+          <div class="card-icon">🤖</div>
+          <h3>AI-Generated Tests</h3>
+          <p>Use Postbot to auto-generate pm.test() assertions for every request in seconds.</p>
+        </div>
+        <div class="card">
+          <div class="card-icon">🌐</div>
+          <h3>Public Workspace</h3>
+          <p>Publish your Flow to the Postman Public API Network so anyone can fork and run it.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- STEP-BY-STEP TUTORIAL -->
+  <section class="section alt" id="tutorial">
+    <div class="container">
+      <h2 class="section-title">Step-by-Step Tutorial</h2>
+
+      <!-- Step 1 -->
+      <div class="step" id="step-1">
+        <div class="step-header" onclick="toggleStep('step-1')">
+          <span class="step-num">01</span>
+          <h3>Create a Collection with 3 Requests</h3>
+          <span class="step-toggle">▼</span>
+        </div>
+        <div class="step-body">
+          <p>Open Postman and create a new Collection called <strong>User Posts Pipeline</strong>. Add these three requests:</p>
+          <div class="request-list">
+            <div class="request-item get">
+              <span class="method">GET</span>
+              <code>https://jsonplaceholder.typicode.com/users/{{userId}}</code>
+              <span class="req-label">Fetch User</span>
+            </div>
+            <div class="request-item get">
+              <span class="method">GET</span>
+              <code>https://jsonplaceholder.typicode.com/posts?userId={{userId}}</code>
+              <span class="req-label">Get User Posts</span>
+            </div>
+            <div class="request-item get">
+              <span class="method">GET</span>
+              <code>https://jsonplaceholder.typicode.com/posts/{{postId}}</code>
+              <span class="req-label">Get Post Detail</span>
+            </div>
+          </div>
+          <div class="tip">
+            <strong>💡 Tip:</strong> Use <code>{{userId}}</code> as a Collection variable. Set it to <code>1</code> in the Variables tab to start.
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 2 -->
+      <div class="step" id="step-2">
+        <div class="step-header" onclick="toggleStep('step-2')">
+          <span class="step-num">02</span>
+          <h3>Build the Flow in Postman Flows</h3>
+          <span class="step-toggle">▼</span>
+        </div>
+        <div class="step-body">
+          <p>Click <strong>Flows</strong> in the left sidebar → <strong>New Flow</strong>. Then connect your requests visually:</p>
+          <div class="flow-diagram">
+            <div class="flow-node start">▶ Start</div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-node request">GET /users/1</div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-node select">Select<br><small>body.id</small></div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-node request">GET /posts?userId</div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-node select">Select<br><small>first item</small></div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-node request">GET /posts/:id</div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-node output">📤 Output</div>
+          </div>
+          <ol class="steps-list">
+            <li>Drag a <strong>Send Request</strong> block → select <em>Fetch User</em></li>
+            <li>Add a <strong>Select</strong> block → pick <code>body.id</code> from the response</li>
+            <li>Connect to another <strong>Send Request</strong> block → select <em>Get User Posts</em></li>
+            <li>Add another <strong>Select</strong> block → pick <code>body[0].id</code></li>
+            <li>Connect to the final <strong>Send Request</strong> → <em>Get Post Detail</em></li>
+            <li>Add an <strong>Output</strong> block to display the final result</li>
+          </ol>
+        </div>
+      </div>
+
+      <!-- Step 3 -->
+      <div class="step" id="step-3">
+        <div class="step-header" onclick="toggleStep('step-3')">
+          <span class="step-num">03</span>
+          <h3>Run the Flow and Inspect Results</h3>
+          <span class="step-toggle">▼</span>
+        </div>
+        <div class="step-body">
+          <p>Click <strong>▶ Run</strong> in the top-right of the Flow editor. Watch each block execute in real time.</p>
+          <div class="demo-runner">
+            <div class="runner-header">
+              <span>Flow Runner — Live Demo</span>
+              <button class="btn btn-sm" id="run-demo-btn" onclick="runFlowDemo()">▶ Run Demo</button>
+            </div>
+            <div class="runner-log" id="runner-log">
+              <span class="log-idle">Click "Run Demo" to simulate the Flow execution...</span>
+            </div>
+          </div>
+          <div class="tip">
+            <strong>💡 Tip:</strong> Each block shows its input and output. Click any block to inspect the data flowing through it.
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 4 -->
+      <div class="step" id="step-4">
+        <div class="step-header" onclick="toggleStep('step-4')">
+          <span class="step-num">04</span>
+          <h3>Use Environments to Switch Between APIs</h3>
+          <span class="step-toggle">▼</span>
+        </div>
+        <div class="step-body">
+          <p>Create two Environments — <strong>Dev</strong> and <strong>Prod</strong> — with different <code>baseUrl</code> values. Your Flow automatically uses the active environment.</p>
+          <div class="env-table">
+            <table>
+              <thead><tr><th>Variable</th><th>Dev</th><th>Prod</th></tr></thead>
+              <tbody>
+                <tr><td><code>baseUrl</code></td><td>https://jsonplaceholder.typicode.com</td><td>https://your-api.com</td></tr>
+                <tr><td><code>userId</code></td><td>1</td><td>42</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- POSTBOT SECTION -->
+  <section class="section" id="postbot">
+    <div class="container">
+      <h2 class="section-title">Auto-Generate Tests with Postbot 🤖</h2>
+      <p class="section-sub">Postbot is Postman's AI assistant. Open any request → click the <strong>Tests</strong> tab → click <strong>Ask Postbot</strong> → select <em>"Add tests for this request"</em>.</p>
+
+      <div class="postbot-demo">
+        <div class="postbot-sidebar">
+          <h4>Select a Request</h4>
+          <ul class="req-selector">
+            <li class="active" onclick="showTests('user')">GET /users/1</li>
+            <li onclick="showTests('posts')">GET /posts?userId=1</li>
+            <li onclick="showTests('post')">GET /posts/1</li>
+          </ul>
+          <button class="btn btn-primary btn-sm" onclick="generateTests()">🤖 Ask Postbot</button>
+        </div>
+        <div class="postbot-code">
+          <div class="code-header">
+            <span id="code-title">Tests — GET /users/1</span>
+            <button class="copy-btn" onclick="copyCode()">Copy</button>
+          </div>
+          <pre id="code-block"><code id="code-content">// Click "Ask Postbot" to generate tests...</code></pre>
+          <div class="postbot-status" id="postbot-status"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- RUN IN POSTMAN / WORKSPACE -->
+  <section class="section alt" id="workspace">
+    <div class="container">
+      <h2 class="section-title">Try It Yourself</h2>
+      <p class="section-sub">Fork the collection into your own workspace and run the Flow in under 2 minutes.</p>
+      <div class="workspace-grid">
+        <div class="workspace-card">
+          <h3>📦 Fork the Collection</h3>
+          <p>Get the full <em>User Posts Pipeline</em> collection with all requests, variables, and Postbot-generated tests pre-loaded.</p>
+          <a href="https://app.getpostman.com/run-collection/28548443-e9932830-e8d3-4cf2-9c77-7f307a7dd514" target="_blank" rel="noopener" class="btn btn-primary">
+            <img src="https://run.pstmn.io/button.svg" alt="Run in Postman" style="height:32px;vertical-align:middle;margin-right:8px;">
+            Run in Postman
+          </a>
+        </div>
+        <div class="workspace-card">
+          <h3>🌐 Public Workspace</h3>
+          <p>Browse the full workspace on the Postman Public API Network — including the Flow, environments, and documentation.</p>
+          <a href="https://www.postman.com/supply-geoscientist-53692381/workspace/user-posts-pipeline" target="_blank" rel="noopener" class="btn btn-outline">View on Public API Network →</a>
+        </div>
+        <div class="workspace-card">
+          <h3>📝 Blog Post</h3>
+          <p>Read the full write-up on the Postman Community Forum with screenshots, tips, and a video walkthrough.</p>
+          <a href="https://community.postman.com" target="_blank" rel="noopener" class="btn btn-outline">Read on Community Forum →</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <div class="container">
+      <p>Built for the <strong>Postman Community Contribution Program</strong> · Share with <strong>#postmancontributor</strong></p>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
