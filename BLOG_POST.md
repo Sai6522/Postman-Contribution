@@ -1,132 +1,105 @@
-# Build a No-Code API Automation Pipeline with Postman Flows + Postbot
+# How I stopped writing API chaining scripts and just used Postman Flows
 
-**Category:** Tutorial · Flows · Postbot · API Automation  
 **Tags:** `flows` `postbot` `automation` `no-code` `testing` `collections`
 
 ---
 
-## 👋 Introduction
+So I was working on a project last week where I needed to hit three APIs in sequence — get a user, then fetch their posts, then pull the detail of the first post. Pretty standard stuff.
 
-If you've ever needed to chain multiple API calls together — fetch a user, then get their posts, then filter by keyword — you know how tedious it can be to wire that up manually with scripts.
+My first instinct was to write a pre-request script that stores the userId in an environment variable, then another script to grab the postId, and so on. I've done this a hundred times. It works, but honestly it's annoying to maintain and even more annoying to explain to teammates who aren't deep into Postman scripting.
 
-**Postman Flows** changes that completely. It's a visual, no-code canvas where you connect API requests like building blocks. And when you pair it with **Postbot** (Postman's AI assistant), you can auto-generate test assertions for every request in seconds.
+Then I actually sat down and tried **Postman Flows** properly for the first time. I'd opened it before and closed it because it looked complicated. Turns out it's the opposite — it took me maybe 15 minutes to wire up the whole thing visually with zero scripts.
 
-In this tutorial, I'll walk you through building a complete API automation pipeline from scratch — no code required.
-
----
-
-## 🎯 What We're Building
-
-A 3-step pipeline using the free [JSONPlaceholder API](https://jsonplaceholder.typicode.com):
-
-1. **Fetch a user** → `GET /users/1`
-2. **Get their posts** → `GET /posts?userId=1`
-3. **Get the first post's detail** → `GET /posts/1`
-
-Each step feeds data into the next — automatically.
+Here's exactly what I did, in case it helps anyone else.
 
 ---
 
-## 🛠️ Prerequisites
+## What I built
 
-- Postman desktop app (latest version — v11+)
-- A free Postman account (for saving Flows and publishing to the Public API Network)
+A 3-step pipeline using [JSONPlaceholder](https://jsonplaceholder.typicode.com) (free mock API, great for testing):
+
+1. `GET /users/1` — fetch a user
+2. `GET /posts?userId=1` — get their posts (userId comes from step 1 automatically)
+3. `GET /posts/1` — get the first post's full detail (postId comes from step 2)
+
+Each step passes data into the next one. No scripts anywhere.
 
 ---
 
-## Step 1 — Create the Collection
+## Step 1 — Set up the collection
 
-1. Open Postman → click **New** → **Collection**
-2. Name it **User Posts Pipeline**
-3. Add three requests:
+Create a new collection called **User Posts Pipeline** and add these three requests:
 
-| Name | Method | URL |
-|------|--------|-----|
+| Request | Method | URL |
+|---------|--------|-----|
 | Fetch User | GET | `https://jsonplaceholder.typicode.com/users/{{userId}}` |
 | Get User Posts | GET | `https://jsonplaceholder.typicode.com/posts?userId={{userId}}` |
 | Get Post Detail | GET | `https://jsonplaceholder.typicode.com/posts/{{postId}}` |
 
-4. In the **Variables** tab, add `userId = 1` and `postId = 1` as initial values.
-
-> 💡 **Tip:** Using Collection variables means you can change the user ID in one place and all three requests update automatically.
+In the **Variables** tab, set `userId = 1` and `postId = 1` as defaults. This way if you run the requests individually they still work.
 
 ---
 
 ## Step 2 — Build the Flow
 
-1. Click **Flows** in the left sidebar
-2. Click **New Flow** → give it a name like *User Posts Pipeline Flow*
-3. You'll see a blank canvas — this is where the magic happens
+Click **Flows** in the left sidebar → **New Flow**.
 
-**Connect the blocks:**
+You get a blank canvas. Drag blocks onto it and connect them:
 
 ```
 [Start] → [Send Request: Fetch User] → [Select: body.id]
-       → [Send Request: Get User Posts] → [Select: body[0].id]
-       → [Send Request: Get Post Detail] → [Output]
+        → [Send Request: Get User Posts] → [Select: body[0].id]
+        → [Send Request: Get Post Detail] → [Output]
 ```
 
-**Detailed steps:**
+The **Select** blocks are the key part — they let you pick a value out of the response and pipe it into the next request. So `body.id` from the user response becomes the `userId` for the posts request. No variables, no scripts.
 
-1. Drag a **Send Request** block onto the canvas → select *Fetch User* from your collection
-2. Add a **Select** block → connect it to the response output → type `body.id` to extract the user ID
-3. Drag another **Send Request** block → select *Get User Posts* → connect the `userId` input to the Select output
-4. Add another **Select** block → type `body[0].id` to grab the first post's ID
-5. Add the final **Send Request** block → select *Get Post Detail* → connect `postId` to the Select output
-6. Add an **Output** block at the end to display the final result
-
-> 💡 **Tip:** Click any block while the Flow is running to inspect the live data flowing through it. This is incredibly useful for debugging.
+One thing I didn't realize at first: you can click any block *while the flow is running* and see exactly what data is flowing through it. Really useful when something isn't connecting right.
 
 ---
 
-## Step 3 — Run the Flow
+## Step 3 — Run it
 
-Click **▶ Run** in the top-right corner. Watch each block light up as it executes:
+Hit **▶ Run** top right. The blocks light up one by one:
 
-- Block 1 fires → returns user data
-- Select extracts `id: 1`
-- Block 2 fires with `userId=1` → returns 10 posts
-- Select extracts `id: 1` from the first post
-- Block 3 fires with `postId=1` → returns the full post
-- Output displays the final result
+- Fetch User fires → gets back `{ id: 1, name: "Leanne Graham", ... }`
+- Select pulls out `id: 1`
+- Get User Posts fires with `userId=1` → returns 10 posts
+- Select pulls out `body[0].id` → `1`
+- Get Post Detail fires with `postId=1` → full post object
+- Output shows the final result
 
-The whole pipeline runs in under a second. No scripts. No code.
+Whole thing runs in under 400ms. And I didn't write a single line of JavaScript.
 
 ---
 
-## Step 4 — Add Environments for Dev/Prod Switching
+## Step 4 — Environments for switching between dev and prod
 
-Create two Environments:
+I set up two environments so I can test against the mock API locally and swap to a real API with one click:
 
-**Dev Environment:**
+**Dev:**
 ```
 baseUrl = https://jsonplaceholder.typicode.com
 userId  = 1
 ```
 
-**Prod Environment:**
+**Prod:**
 ```
 baseUrl = https://your-real-api.com
 userId  = 42
 ```
 
-Update your request URLs to use `{{baseUrl}}` instead of the hardcoded domain. Now you can switch between environments with one click — your Flow works identically in both.
+Update the request URLs to use `{{baseUrl}}/users/{{userId}}` etc. Now the Flow works in both environments without touching anything else.
 
 ---
 
-## Step 5 — Generate Tests with Postbot 🤖
+## Step 5 — Tests with Postbot
 
-This is where Postbot shines. For each request:
+This part genuinely surprised me. I opened the **Tests** tab on the Fetch User request, clicked the **Ask Postbot** sparkle icon, and selected *"Add tests for this request"*.
 
-1. Open the request in your collection
-2. Click the **Tests** tab
-3. Click **Ask Postbot** (the sparkle ✨ icon)
-4. Select **"Add tests for this request"**
-
-Postbot analyzes your request and response schema and generates assertions like:
+It looked at the request and response schema and generated this:
 
 ```javascript
-// Auto-generated by Postbot for GET /users/1
 pm.test("Status code is 200", function () {
     pm.response.to.have.status(200);
 });
@@ -149,59 +122,32 @@ pm.test("Response time is less than 500ms", function () {
 });
 ```
 
-Do this for all three requests. You now have a fully tested pipeline — with zero manual test writing.
-
-> 💡 **Tip:** After Postbot generates tests, you can ask it to refine them. Try: *"Add a test that checks the userId matches the request parameter"* — it understands context.
+Did the same for the other two requests. Full test coverage in about 2 minutes. You can also ask Postbot to tweak the tests — I asked it to add a check that the userId in the posts response matches the query param and it just did it.
 
 ---
 
-## Step 6 — Publish to the Public API Network
+## Try it yourself
 
-1. Open your workspace settings → toggle **Visibility** to **Public**
-2. Add a description and tags (`flows`, `automation`, `jsonplaceholder`)
-3. Click **Publish**
+I published the workspace publicly so you can fork the collection and run it directly:
 
-Your workspace is now discoverable on the [Postman Public API Network](https://www.postman.com/explore). Anyone can fork your collection and run the Flow in their own workspace.
+[![Run in Postman](https://run.pstmn.io/button.svg)](https://app.getpostman.com/run-collection/28548443-e9932830-e8d3-4cf2-9c77-7f307a7dd514)
 
-**Add a Run in Postman button** to your README or blog post:
+Full workspace: [postman.com/supply-geoscientist-53692381/workspace/user-posts-pipeline](https://www.postman.com/supply-geoscientist-53692381/workspace/user-posts-pipeline)
 
-```html
-<a href="https://app.getpostman.com/run-collection/28548443-e9932830-e8d3-4cf2-9c77-7f307a7dd514">
-  <img src="https://run.pstmn.io/button.svg" alt="Run in Postman">
-</a>
-```
+I also put together an interactive demo page where you can simulate the Flow running and see the Postbot test generation in action: [sai6522.github.io/Postman-Contribution](https://sai6522.github.io/Postman-Contribution/)
 
 ---
 
-## 🎉 What You've Accomplished
+## Honest thoughts
 
-In this tutorial you:
+Flows is genuinely useful for this kind of sequential API work. I wouldn't use it for everything — if I need complex logic or loops I'd still write scripts. But for straightforward chaining like this it's way cleaner and easier to share with people who don't know Postman deeply.
 
-- ✅ Built a 3-request API chain using **Postman Flows** — no code
-- ✅ Used **Select blocks** to pass data between requests automatically
-- ✅ Created **Environments** for seamless Dev/Prod switching
-- ✅ Generated comprehensive tests with **Postbot AI** in seconds
-- ✅ Published your work to the **Public API Network** for the community
+Postbot is also better than I expected. The tests it generates aren't just boilerplate status code checks — it actually looks at the response structure.
 
----
+Anyway, hope this saves someone the time I spent figuring it out. Drop a comment if you have questions or if you build something cool with Flows.
 
-## 🔗 Resources
-
-- [Postman Flows Documentation](https://learning.postman.com/docs/postman-flows/gs/flows-overview/)
-- [Postbot Documentation](https://learning.postman.com/docs/getting-started/basics/about-postbot/)
-- [Public API Network](https://www.postman.com/explore)
-- [JSONPlaceholder API](https://jsonplaceholder.typicode.com)
-- [Interactive Demo Page](https://sai6522.github.io/Postman-Contribution/)
-- [Public Workspace](https://www.postman.com/supply-geoscientist-53692381/workspace/user-posts-pipeline)
+— Sai
 
 ---
 
-## 💬 Discussion
-
-Have questions or want to share your own Flow? Drop a comment below! I'd love to see what pipelines you build.
-
-If this helped you, share it with **#postmancontributor** on social media 🚀
-
----
-
-*Written for the Postman Community Contribution Program · May 2026*
+*#postmancontributor*
